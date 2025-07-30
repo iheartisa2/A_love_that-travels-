@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A love story❤️<3</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Pacifico&family=Orbitron:wght@400;500;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            overflow-x: hidden; /* Prevent horizontal scroll due to trail */
+            /* Background gradient is now handled by .sci-fi-background */
+        }
+
+        .font-pacifico {
+            font-family: 'Pacifico', cursive;
+        }
+
+        .font-orbitron {
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        /* Sci-Fi Background Animation */
+        .sci-fi-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom right, #1a202c, #000000, #4a0e4e);
+            z-index: -2; /* Behind everything */
+            overflow: hidden;
+        }
+
+        .sci-fi-background::before,
+        .sci-fi-background::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0.3;
+        }
+
+        .sci-fi-background::before {
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(255, 105, 180, 0.05),
+                rgba(255, 105, 180, 0.05) 1px,
+                transparent 1px,
+                transparent 20px
+            ),
+            repeating-linear-gradient(
+                90deg,
+                rgba(255, 105, 180, 0.05),
+                rgba(255, 105, 180, 0.05) 1px,
+                transparent 1px,
+                transparent 20px
+            );
+            animation: moveGrid 60s linear infinite;
+        }
+
+        .sci-fi-background::after {
+            background: radial-gradient(circle at center, rgba(173, 216, 230, 0.05) 0%, transparent 70%);
+            animation: pulseGlow 15s ease-in-out infinite alternate;
+        }
+
+        @keyframes moveGrid {
+            from {
+                background-position: 0 0;
+            }
+            to {
+                background-position: 100% 100%;
+            }
+        }
+
+        @keyframes pulseGlow {
+            0% {
+                transform: scale(1);
+                opacity: 0.05;
+            }
+            50% {
+                transform: scale(1.1);
+                opacity: 0.15;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 0.05;
+            }
+        }
+
+        /* Mouse trail effect - now a pink glow */
+        .mouse-glow-trail {
+            position: fixed;
+            width: 150px; /* Size for glow */
+            height: 150px;
+            border-radius: 50%;
+            background: radial-gradient(circle at center, rgba(255, 105, 180, 0.4) 0%, transparent 70%); /* Pink glow */
+            filter: blur(70px); /* Increased blur for a softer fade */
+            pointer-events: none;
+            transform: translate(-50%, -50%); /* Center the glow on the cursor */
+            z-index: -1; /* Keep it behind content */
+            transition: transform 0.1s ease-out, opacity 0.1s ease-out; /* Smooth transition for trail elements */
+        }
+
+        /* Custom styles for disabled buttons */
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Password Unlock Screen Styles */
+        #password-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8); /* Darker overlay */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            transition: opacity 1s ease-out;
+        }
+
+        #password-screen.unlocked {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .gate {
+            position: absolute;
+            width: 50%;
+            height: 100%;
+            background-color: #2d3748; /* Dark gray for gates */
+            transition: transform 1.5s ease-out, opacity 1.5s ease-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: #pink-400;
+            font-family: 'Orbitron', sans-serif; /* Sci-fi font for gates */
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+            border: 2px solid #8b5cf6; /* Purple border */
+            box-sizing: border-box; /* Include padding and border in the element's total width and height */
+        }
+
+        .gate-left {
+            left: 0;
+            transform-origin: left;
+            transform: translateX(0);
+        }
+
+        .gate-right {
+            right: 0;
+            transform-origin: right;
+            transform: translateX(0);
+        }
+
+        .gate.open-left {
+            transform: translateX(-100%);
+            opacity: 0;
+        }
+
+        .gate.open-right {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+
+        /* Mobile responsiveness for sections */
+        @media (min-width: 768px) { /* Medium screens and up */
+            .main-content-grid {
+                grid-template-columns: 1fr 1fr; /* Two columns for input and memories */
+            }
+        }
+        @media (min-width: 1024px) { /* Large screens and up */
+            .main-content-grid {
+                grid-template-columns: 1fr 2fr; /* Input smaller, memories larger */
+            }
+        }
+
+        /* Enhanced scrollbar for memories list */
+        #memories-list::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        #memories-list::-webkit-scrollbar-track {
+            background: #1a202c; /* Dark track */
+            border-radius: 5px;
+        }
+
+        #memories-list::-webkit-scrollbar-thumb {
+            background: #8b5cf6; /* Purple thumb */
+            border-radius: 5px;
+            border: 2px solid #1a202c; /* Dark border around thumb */
+        }
+
+        #memories-list::-webkit-scrollbar-thumb:hover {
+            background: #a78bfa; /* Lighter purple on hover */
+        }
+
+        /* Mobile scroll fix */
+        @media (max-width: 767px) {
+            body {
+                overflow-x: hidden;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+                position: relative;
+            }
+            
+            #memories-list {
+                max-height: 60vh !important;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            .main-content-grid {
+                display: block;
+                gap: 1.5rem;
+            }
+            
+            /* Ensure mouse trail doesn't interfere on mobile */
+            #mouse-trail-container {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center p-4 sm:p-6 bg-gradient-to-br from-gray-900 via-black to-purple-950 relative">
+
+    <!-- Sci-Fi Background Element -->
+    <div class="sci-fi-background"></div>
+
+    <!-- Password Unlock Screen -->
+    <div id="password-screen">
+        <div class="gate gate-left">
+            <span class="text-pink-400 drop-shadow-lg">Raf</span>
+        </div>
+        <div class="gate gate-right">
+            <span class="text-pink-400 drop-shadow-lg">Isa</span>
+        </div>
+        <div class="z-10 bg-gray-800 p-8 rounded-3xl shadow-xl text-center max-w-sm w-full border border-pink-700 backdrop-blur-sm bg-opacity-70">
+            <h2 class="text-3xl font-orbitron text-pink-400 mb-6 drop-shadow-md">Enter the key, and you’ll always see,
+            No distance can break you and me❤️</h2>
+            <input
+                type="password"
+                id="password-input"
+                class="w-full p-3 rounded-xl border-2 border-pink-600 focus:border-pink-400 focus:ring focus:ring-pink-700 focus:ring-opacity-50 transition duration-200 ease-in-out text-gray-100 placeholder-pink-300 bg-gray-900 mb-4 text-center text-lg font-mono"
+                placeholder="Enter Code"
+            />
+            <button
+                id="unlock-btn"
+                class="w-full bg-gradient-to-r from-pink-500 to-purple-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition duration-300 ease-in-out text-lg flex items-center justify-center
+                active:scale-95 active:shadow-inner focus:outline-none focus:ring-2 focus:ring-pink-300 focus:ring-opacity-75 relative overflow-hidden"
+            >
+                <span class="absolute inset-0 bg-gradient-to-r from-pink-400 to-purple-500 opacity-0 animate-pulse-light"></span>
+                <svg class="w-6 h-6 mr-2 animate-pulse-slow" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm0-11V7a2 2 0 114 0v3m-4 0h4"></path>
+                </svg>
+               Unlock the Memories💫
+            </button>
+            <p id="password-error" class="text-red-400 mt-4 hidden text-sm font-mono">Access Denied. Invalid Key.</p>
+        </div>
+    </div>
+
+    <!-- Mouse Trail Effect Container -->
+    <div id="mouse-trail-container"></div>
+
+    <!-- Main App Content - Initially Hidden -->
+    <div id="main-app-content" class="hidden w-full max-w-5xl lg:max-w-7xl flex-grow grid gap-6 main-content-grid mt-8">
+        <!-- Section 1: Add Memories (Input Area) -->
+        <div class="bg-gray-800 p-6 sm:p-8 rounded-3xl shadow-xl w-full mb-8 md:mb-0 transform transition-all duration-300 group border border-pink-700 relative z-10 backdrop-blur-sm bg-opacity-70">
+            <h1 class="text-4xl sm:text-5xl font-orbitron text-center text-pink-400 mb-4 drop-shadow-md group-hover:text-pink-300 transition duration-300">
+                Raf x Isa <span role="img" aria-label="heart">💖</span>
+            </h1>
+            <p class="text-center text-gray-200 mb-6 text-lg font-light">
+                A special place to preserve our most cherished memories together. Share your heart below.
+            </p>
+
+            <!-- Text Memory Input -->
+            <div class="mb-8 p-4 border border-pink-800 rounded-xl bg-gray-900 bg-opacity-50">
+                <h2 class="text-2xl font-orbitron text-pink-300 mb-3">Write Your Memories Here 💖</h2>
+                <textarea
+                    id="memory-text"
+                    class="w-full p-4 rounded-xl border-2 border-pink-600 focus:border-pink-400 focus:ring focus:ring-pink-700 focus:ring-opacity-50 transition duration-200 ease-in-out text-gray-100 placeholder-pink-300 bg-gray-900 bg-opacity-70 resize-y min-h-[120px] font-mono text-base"
+                    placeholder="Share your precious memories here..."
+                ></textarea>
+                <button
+                    id="add-memory-btn"
+                    class="w-full mt-4 bg-gradient-to-r from-pink-500 to-purple-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition duration-300 ease-in-out text-lg flex items-center justify-center
+                    active:scale-95 active:shadow-inner focus:outline-none focus:ring-2 focus:ring-pink-300 focus:ring-opacity-75 relative overflow-hidden"
+                    disabled
+                >
+                    <span class="absolute inset-0 bg-gradient-to-r from-pink-400 to-purple-500 opacity-0 animate-pulse-light"></span>
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                    </svg>
+                    Save Memory
+                </button>
+            </div>
+
+            <!-- Image Memory Input -->
+            <div class="mb-6 p-4 border border-pink-800 rounded-xl bg-gray-900 bg-opacity-50" id="image-paste-area">
+                <h2 class="text-2xl font-orbitron text-pink-300 mb-3">Screenshots & Memories 📸</h2>
+                <div class="relative border-2 border-dashed border-pink-600 rounded-xl p-6 text-center text-gray-400 mb-4 h-40 flex items-center justify-center overflow-hidden bg-gray-900 bg-opacity-70 cursor-pointer hover:border-pink-400 transition-colors duration-200" id="image-upload-area">
+                    <input type="file" id="image-file-input" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                    <img id="pasted-image-preview" src="" alt="Image preview" class="max-h-full max-w-full object-contain rounded-lg hidden z-0" />
+                    <div id="paste-placeholder" class="font-mono text-sm text-center z-0 pointer-events-none">
+                        <div class="mb-2">📱 Tap to select image</div>
+                        <div class="text-xs text-gray-500">or paste with Ctrl+V on desktop</div>
+                    </div>
+                    <div id="image-uploading-indicator" class="absolute inset-0 flex items-center justify-center bg-gray-900 bg-opacity-75 hidden z-20">
+                        <svg class="animate-spin h-8 w-8 text-pink-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span class="ml-3 text-pink-300 font-mono">Transmitting Data...</span>
+                    </div>
+                </div>
+                <textarea
+                    id="image-description"
+                    class="w-full p-4 rounded-xl border-2 border-pink-600 focus:border-pink-400 focus:ring focus:ring-pink-700 focus:ring-opacity-50 transition duration-200 ease-in-out text-gray-100 placeholder-pink-300 bg-gray-900 bg-opacity-70 resize-y min-h-[80px] font-mono text-base"
+                    placeholder="Add a memory description for this precious moment..."
+                    disabled
+                ></textarea>
+                <button
+                    id="save-image-btn"
+                    class="w-full mt-4 bg-gradient-to-r from-pink-500 to-purple-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition duration-300 ease-in-out text-lg flex items-center justify-center
+                    active:scale-95 active:shadow-inner focus:outline-none focus:ring-2 focus:ring-pink-300 focus:ring-opacity-75 relative overflow-hidden"
+                    disabled
+                >
+                    <span class="absolute inset-0 bg-gradient-to-r from-pink-400 to-purple-500 opacity-0 animate-pulse-light"></span>
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                    </svg>
+                    Save Memory
+                </button>
+                <button
+                    id="clear-image-btn"
+                    class="w-full mt-2 bg-gray-600 text-white font-bold py-2 px-5 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition duration-300 ease-in-out text-base flex items-center justify-center
+                    active:scale-95 active:shadow-inner focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-75 hidden"
+                >
+                    Clear Image
+                </button>
+            </div>
+
+            <!-- User ID Display - Moved to Section 1 for better grouping -->
+            <div class="text-sm text-gray-300 text-center mt-4 font-mono">
+                Authorized User ID: <span class="font-mono text-purple-400 break-all" id="user-id-display">Initializing...</span>
+            </div>
+        </div>
+
+        <!-- Section 2: All Our Memories (Diary/Saved Notes) -->
+        <div class="w-full relative z-10 bg-gray-900 p-6 rounded-3xl shadow-xl border border-pink-700 flex flex-col backdrop-blur-sm bg-opacity-70">
+            <h2 class="text-3xl font-orbitron text-pink-300 mb-6 text-center">Archived Memory Logs</h2>
+            <div id="memories-list" class="grid gap-6 overflow-y-auto flex-grow" style="max-height: 80vh;">
+                <p id="no-memories-message" class="text-center text-gray-300 text-lg py-8 font-mono">No data logs found. Begin inputting new memories. <span role="img" aria-label="sparkles">✨</span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-confirm-modal" class="fixed inset-0 bg-gray-900 bg-opacity-70 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-gray-800 p-8 rounded-xl shadow-2xl text-center max-w-sm w-full border border-pink-700 backdrop-blur-sm bg-opacity-80">
+            <h3 class="text-xl font-orbitron text-gray-100 mb-4">Confirm Data Purge</h3>
+            <p class="text-gray-300 mb-6 font-light">Are you sure you want to permanently delete this memory log?</p>
+            <div class="flex justify-center space-x-4">
+                <button
+                    id="confirm-delete-btn"
+                    class="bg-red-600 text-white font-bold py-2 px-5 rounded-lg shadow-md hover:bg-red-700 transition duration-200 active:scale-95 font-orbitron"
+                >
+                    Purge
+                </button>
+                <button
+                    id="cancel-delete-btn"
+                    class="bg-gray-600 text-gray-100 font-bold py-2 px-5 rounded-lg shadow-md hover:bg-gray-700 transition duration-200 active:scale-95 font-orbitron"
+                >
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
+
+        // Global variables for Firebase config and app ID
+        const appId = 'ants-2ece8'; // Updated with your project ID
+        const firebaseConfig = { // Your provided Firebase configuration
+            apiKey: "AIzaSyARm9QQLhm-XoT0v_I41OQGpn7_cKxy0jk",
+            authDomain: "ants-2ece8.firebaseapp.com",
+            databaseURL: "https://ants-2ece8-default-rtdb.firebaseio.com",
+            projectId: "ants-2ece8",
+            storageBucket: "ants-2ece8.firebasestorage.app",
+            messagingSenderId: "290478227873",
+            appId: "1:290478227873:web:d6f4c8ebae532f340d8be0",
+            measurementId: "G-7CHR3NL4GF"
+        };
+
+
+        // Define the maximum length of the mouse trail
+        const TRAIL_LENGTH = 20;
+
+        // Password for the website (Base64 encoded for obfuscation)
+        // Original password: "rafxisa"
+        const HASHED_PASSWORD = "cmFmeGlzYQ=="; // Base64 of "rafxisa"
+
+        // Firebase instances
+        let app;
+        let db;
+        let auth;
+        let storage;
+        let currentUserId = '';
+
+        // DOM elements
+        const passwordScreen = document.getElementById('password-screen');
+        const passwordInput = document.getElementById('password-input');
+        const unlockBtn = document.getElementById('unlock-btn');
+        const passwordError = document.getElementById('password-error');
+        const mainAppContent = document.getElementById('main-app-content');
+        const gateLeft = document.querySelector('.gate-left');
+        const gateRight = document.querySelector('.gate-right');
+
+        const memoryTextarea = document.getElementById('memory-text');
+        const addMemoryBtn = document.getElementById('add-memory-btn');
+        const imagePasteArea = document.getElementById('image-paste-area');
+        const imageUploadArea = document.getElementById('image-upload-area');
+        const imageFileInput = document.getElementById('image-file-input');
+        const pastedImagePreview = document.getElementById('pasted-image-preview');
+        const pastePlaceholder = document.getElementById('paste-placeholder');
+        const imageDescriptionInput = document.getElementById('image-description');
+        const saveImageBtn = document.getElementById('save-image-btn');
+        const imageUploadingIndicator = document.getElementById('image-uploading-indicator');
+        const userIdDisplay = document.getElementById('user-id-display');
+        const memoriesList = document.getElementById('memories-list');
+        const noMemoriesMessage = document.getElementById('no-memories-message');
+        const deleteConfirmModal = document.getElementById('delete-confirm-modal');
+        const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+        const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
+        const clearImageBtn = document.getElementById('clear-image-btn'); // New clear image button
+
+        let pastedImageFile = null;
+        let memoryToDelete = null; // Stores the memory object to be deleted
+
+        // Function to Base64 encode a string
+        function base64Encode(message) {
+            return btoa(message);
+        }
+
+        // Helper function to handle image selection (both file input and paste)
+        function handleImageSelection(file) {
+            if (file && file.type.startsWith('image/')) {
+                pastedImageFile = file;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    pastedImagePreview.src = e.target.result;
+                    pastedImagePreview.classList.remove('hidden');
+                    pastePlaceholder.classList.add('hidden');
+                    clearImageBtn.classList.remove('hidden'); // Show clear button
+                };
+                reader.readAsDataURL(file);
+                imageDescriptionInput.value = ''; // Clear description for new image
+                saveImageBtn.disabled = false; // Enable save button
+                imageDescriptionInput.disabled = false; // Enable description input
+                return true;
+            }
+            return false;
+        }
+
+        // Handle password unlock
+        unlockBtn.addEventListener('click', async () => {
+            const inputPassword = passwordInput.value.trim(); // Trim whitespace
+            const encodedInput = base64Encode(inputPassword);
+
+            if (encodedInput === HASHED_PASSWORD) {
+                passwordError.classList.add('hidden');
+                // Trigger gate opening animation
+                gateLeft.classList.add('open-left');
+                gateRight.classList.add('open-right');
+
+                // After animation, hide password screen and show main content
+                setTimeout(() => {
+                    passwordScreen.classList.add('unlocked');
+                    mainAppContent.classList.remove('hidden');
+                    initFirebase(); // Initialize Firebase after unlock
+                }, 1500); // Match animation duration
+            } else {
+                passwordError.classList.remove('hidden');
+                passwordInput.value = ''; // Clear input on wrong password
+            }
+        });
+
+        passwordInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                unlockBtn.click();
+            }
+        });
+
+
+        // Initialize Firebase and set up authentication listener
+        const initFirebase = async () => {
+            // Check if Firebase config is provided
+            if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+                console.error("Missing Firebase configuration. Please check your setup in the script section.");
+                userIdDisplay.textContent = "Firebase config missing!";
+                return;
+            }
+
+            try {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                storage = getStorage(app);
+
+                // Sign in anonymously if no initial auth token is provided
+                // This is crucial for Canvas environment where __initial_auth_token might be present
+                if (typeof __initial_auth_token !== 'undefined') {
+                    await auth.signInWithCustomToken(__initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        currentUserId = user.uid;
+                    } else {
+                        // Fallback if auth state changes unexpectedly, though signInAnonymously should keep a user
+                        console.warn("User logged out unexpectedly. Attempting anonymous sign-in.");
+                        signInAnonymously(auth).then(cred => {
+                            currentUserId = cred.user.uid;
+                        }).catch(e => console.error("Error re-signing in anonymously:", e));
+                    }
+                    userIdDisplay.textContent = currentUserId || "Error loading user ID";
+                    setupRealtimeMemoriesListener(); // Start listening for memories once authenticated
+                });
+            } catch (error) {
+                console.error("Error initializing Firebase:", error);
+                userIdDisplay.textContent = "Firebase Init Error!";
+            }
+        };
+
+        // Setup real-time listener for memories
+        const setupRealtimeMemoriesListener = () => {
+            // Ensure currentUserId is available before setting up listener
+            if (!currentUserId) {
+                console.warn("User ID not available yet for setting up memory listener.");
+                return;
+            }
+
+            // Using public data path as per instructions
+            const memoriesCollectionRef = collection(db, `artifacts/${appId}/public/data/memories`);
+            // Note: orderBy can cause issues if indexes are not set up in Firestore.
+            // For simplicity and to avoid requiring manual index creation by the user,
+            // we will fetch all and sort client-side if needed, but for now,
+            // the existing orderBy is kept as it was in the original code.
+            // If runtime errors occur due to missing index, this might need to be removed.
+            const q = query(memoriesCollectionRef, orderBy('timestamp', 'desc'));
+
+            onSnapshot(q, (snapshot) => {
+                const fetchedMemories = [];
+                snapshot.forEach(doc => {
+                    fetchedMemories.push({ id: doc.id, ...doc.data() });
+                });
+                renderMemories(fetchedMemories);
+            }, (error) => {
+                console.error("Error fetching memories:", error);
+            });
+        };
+
+        // Render memories to the DOM
+        const renderMemories = (memories) => {
+            memoriesList.innerHTML = ''; // Clear existing memories
+            if (memories.length === 0) {
+                noMemoriesMessage.style.display = 'block';
+            } else {
+                noMemoriesMessage.style.display = 'none';
+                memories.forEach(memory => {
+                    const memoryCard = document.createElement('div');
+                    memoryCard.className = "bg-gray-800 p-6 rounded-2xl shadow-md border-2 border-pink-700 transform transition-all duration-200 hover:scale-[1.02] hover:shadow-lg hover:border-pink-500 backdrop-blur-sm bg-opacity-70";
+
+                    let contentHtml = '';
+                    if (memory.type === 'image' && memory.imageUrl) {
+                        contentHtml = `
+                            <div class="mb-3">
+                                <img src="${memory.imageUrl}" alt="${memory.imageDescription || "Memory image"}" class="w-full h-auto rounded-lg mb-2 object-cover max-h-96" onerror="this.onerror=null;this.src='https://placehold.co/400x300/CCCCCC/333333?text=Image+Load+Error';" />
+                                ${memory.imageDescription ? `<p class="text-gray-200 text-sm italic font-light">${memory.imageDescription}</p>` : ''}
+                            </div>
+                        `;
+                    } else {
+                        contentHtml = `<p class="text-gray-100 text-base mb-3 leading-relaxed font-light">${memory.text}</p>`;
+                    }
+
+                    memoryCard.innerHTML = `
+                        ${contentHtml}
+                        <div class="flex justify-between items-center text-sm text-gray-400 font-mono">
+                            <span>
+                                ${memory.timestamp?.toDate ? new Date(memory.timestamp.toDate()).toLocaleString() : 'Just now'}
+                            </span>
+                            <button
+                                class="text-red-300 hover:text-red-500 transition duration-200 transform hover:scale-110 active:scale-90 delete-memory-btn"
+                                title="Delete Memory"
+                                data-memory-id="${memory.id}"
+                                data-memory-type="${memory.type || 'text'}"
+                                data-image-url="${memory.imageUrl || ''}"
+                                data-image-path="${memory.imagePath || ''}"
+                            >
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    `;
+                    memoriesList.appendChild(memoryCard);
+                });
+
+                // Attach event listeners to new delete buttons
+                document.querySelectorAll('.delete-memory-btn').forEach(button => {
+                    button.onclick = (event) => {
+                        const id = event.currentTarget.dataset.memoryId;
+                        const type = event.currentTarget.dataset.memoryType;
+                        const imageUrl = event.currentTarget.dataset.imageUrl;
+                        const imagePath = event.currentTarget.dataset.imagePath;
+                        memoryToDelete = { id, type, imageUrl, imagePath };
+                        deleteConfirmModal.classList.remove('hidden');
+                    };
+                });
+            }
+        };
+
+        // Handle adding a text memory
+        addMemoryBtn.addEventListener('click', async () => {
+            const text = memoryTextarea.value.trim();
+            if (!text || !db || !currentUserId) {
+                console.log("Memory text is empty or Firebase/User not ready.");
+                return;
+            }
+
+            try {
+                const memoriesCollectionRef = collection(db, `artifacts/${appId}/public/data/memories`);
+                await addDoc(memoriesCollectionRef, {
+                    type: 'text',
+                    text: text,
+                    timestamp: serverTimestamp(),
+                    userId: currentUserId,
+                });
+                memoryTextarea.value = ''; // Clear input
+                addMemoryBtn.disabled = true; // Disable button after adding
+            } catch (e) {
+                console.error("Error adding document: ", e);
+            }
+        });
+
+        // Enable/disable add memory button based on textarea content
+        memoryTextarea.addEventListener('input', () => {
+            addMemoryBtn.disabled = memoryTextarea.value.trim() === '';
+        });
+
+        // Handle file input selection (mobile-friendly)
+        imageFileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                handleImageSelection(file);
+            }
+        });
+
+        // Handle image paste (desktop)
+        imagePasteArea.addEventListener('paste', (event) => {
+            const items = (event.clipboardData || event.originalEvent.clipboardData).items;
+            let imageFound = false;
+            for (const item of items) {
+                if (item.type.indexOf('image') !== -1) {
+                    const file = item.getAsFile();
+                    if (file) {
+                        imageFound = handleImageSelection(file);
+                        break;
+                    }
+                }
+            }
+            if (!imageFound) {
+                console.log("No image found in clipboard data.");
+                pastedImagePreview.src = ''; // Clear preview
+                pastedImagePreview.classList.add('hidden');
+                pastePlaceholder.classList.remove('hidden');
+                saveImageBtn.disabled = true; // Disable save button
+                imageDescriptionInput.disabled = true; // Disable description input
+                clearImageBtn.classList.add('hidden'); // Hide clear button
+            }
+        });
+
+        // Handle saving image memory
+        saveImageBtn.addEventListener('click', async () => {
+            if (!pastedImageFile || !db || !storage || !currentUserId) {
+                console.log("No image to save or Firebase/User/Storage not ready.");
+                return;
+            }
+
+            imageUploadingIndicator.classList.remove('hidden');
+            saveImageBtn.disabled = true;
+            imageDescriptionInput.disabled = true;
+            clearImageBtn.disabled = true; // Disable clear button during upload
+
+            try {
+                const storagePath = `artifacts/${appId}/public/images/${currentUserId}/${Date.now()}_${pastedImageFile.name}`;
+                const storageRef = ref(storage, storagePath);
+                const snapshot = await uploadBytes(storageRef, pastedImageFile);
+                const downloadURL = await getDownloadURL(snapshot.ref);
+
+                const memoriesCollectionRef = collection(db, `artifacts/${appId}/public/data/memories`);
+                await addDoc(memoriesCollectionRef, {
+                    type: 'image',
+                    imageUrl: downloadURL,
+                    imageDescription: imageDescriptionInput.value,
+                    timestamp: serverTimestamp(),
+                    userId: currentUserId,
+                    imagePath: storagePath, // Save storage path in Firestore
+                });
+
+                // Reset image input area
+                pastedImageFile = null;
+                pastedImagePreview.src = '';
+                pastedImagePreview.classList.add('hidden');
+                pastePlaceholder.classList.remove('hidden');
+                imageDescriptionInput.value = '';
+                clearImageBtn.classList.add('hidden'); // Hide clear button after successful save
+            } catch (e) {
+                console.error("Error uploading image or adding document: ", e);
+            } finally {
+                imageUploadingIndicator.classList.add('hidden');
+                // Re-evaluate button and input states after upload attempt
+                saveImageBtn.disabled = true; // Should remain disabled until new image is pasted
+                imageDescriptionInput.disabled = true; // Should remain disabled until new image is pasted
+                clearImageBtn.disabled = false; // Re-enable clear button if it's visible (though it's hidden here)
+            }
+        });
+
+        // Handle clearing the pasted image
+        clearImageBtn.addEventListener('click', () => {
+            pastedImageFile = null;
+            pastedImagePreview.src = '';
+            pastedImagePreview.classList.add('hidden');
+            pastePlaceholder.classList.remove('hidden');
+            imageDescriptionInput.value = '';
+            imageDescriptionInput.disabled = true;
+            saveImageBtn.disabled = true;
+            clearImageBtn.classList.add('hidden');
+            imageFileInput.value = ''; // Reset file input
+        });
+
+
+        // Handle delete confirmation
+        confirmDeleteBtn.addEventListener('click', async () => {
+            if (!memoryToDelete || !db) {
+                return;
+            }
+            try {
+                if (memoryToDelete.type === 'image' && memoryToDelete.imagePath && storage) {
+                    try {
+                        const imageRef = ref(storage, memoryToDelete.imagePath);
+                        await deleteObject(imageRef);
+                    } catch (storageError) {
+                        console.warn("Could not delete image from storage (might not exist or permissions issue):", storageError);
+                    }
+                }
+                await deleteDoc(doc(db, `artifacts/${appId}/public/data/memories`, memoryToDelete.id));
+            } catch (e) {
+                console.error("Error deleting document: ", e);
+            } finally {
+                // Always hide modal and reset memoryToDelete, regardless of success or failure
+                deleteConfirmModal.classList.add('hidden');
+                memoryToDelete = null;
+            }
+        });
+
+        cancelDeleteBtn.addEventListener('click', () => {
+            deleteConfirmModal.classList.add('hidden');
+            memoryToDelete = null; // Reset on cancel too
+        });
+
+        // Mouse trail logic
+        const trailPositions = [];
+        const mouseTrailContainer = document.getElementById('mouse-trail-container');
+
+        // Check for touch device to disable mouse trail
+        const isTouchDevice = () => {
+            return ('ontouchstart' in window) ||
+                   (navigator.maxTouchPoints > 0) ||
+                   (navigator.msMaxTouchPoints > 0);
+        };
+
+        if (!isTouchDevice()) {
+            document.addEventListener('mousemove', (event) => {
+                const newPosition = { x: event.clientX, y: event.clientY, id: crypto.randomUUID() };
+                trailPositions.push(newPosition);
+
+                if (trailPositions.length > TRAIL_LENGTH) {
+                    trailPositions.shift(); // Remove the oldest position
+                }
+
+                // Clear and re-render trail elements
+                mouseTrailContainer.innerHTML = '';
+                trailPositions.forEach((pos, index) => {
+                    const trailElement = document.createElement('div');
+                    trailElement.className = 'mouse-glow-trail';
+                    trailElement.style.left = `${pos.x}px`;
+                    trailElement.style.top = `${pos.y}px`;
+                    trailElement.style.opacity = `${(index + 1) / TRAIL_LENGTH * 0.6}`;
+                    trailElement.style.transform = `translate(-50%, -50%) scale(${(index + 1) / TRAIL_LENGTH * 0.7 + 0.3})`;
+                    mouseTrailContainer.appendChild(trailElement);
+                });
+            });
+        }
+
+
+        // Initialize the app when the window loads
+        // The app now starts with the password screen, and Firebase init is called after successful unlock.
+        // window.onload = initFirebase; // Removed this line
+    </script>
+</body>
+</html>
