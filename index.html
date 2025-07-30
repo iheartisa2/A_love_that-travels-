@@ -94,19 +94,7 @@
             }
         }
 
-        /* Mouse trail effect - now a pink glow */
-        .mouse-glow-trail {
-            position: fixed;
-            width: 150px; /* Size for glow */
-            height: 150px;
-            border-radius: 50%;
-            background: radial-gradient(circle at center, rgba(255, 105, 180, 0.4) 0%, transparent 70%); /* Pink glow */
-            filter: blur(70px); /* Increased blur for a softer fade */
-            pointer-events: none;
-            transform: translate(-50%, -50%); /* Center the glow on the cursor */
-            z-index: -1; /* Keep it behind content */
-            transition: transform 0.1s ease-out, opacity 0.1s ease-out; /* Smooth transition for trail elements */
-        }
+        /* Mouse trail removed for better performance */
 
         /* Custom styles for disabled buttons */
         button:disabled {
@@ -139,16 +127,13 @@
             position: absolute;
             width: 50%;
             height: 100%;
-            background-color: #2d3748; /* Dark gray for gates */
             transition: transform 1.5s ease-out, opacity 1.5s ease-out;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 3rem;
-            color: #pink-400;
             font-family: 'Orbitron', sans-serif; /* Sci-fi font for gates */
             box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
-            border: 2px solid #8b5cf6; /* Purple border */
             box-sizing: border-box; /* Include padding and border in the element's total width and height */
         }
 
@@ -156,12 +141,18 @@
             left: 0;
             transform-origin: left;
             transform: translateX(0);
+            background-color: #1e3a8a; /* Blue background for Raf */
+            border: 2px solid #3b82f6; /* Blue border */
+            color: #60a5fa; /* Light blue text */
         }
 
         .gate-right {
             right: 0;
             transform-origin: right;
             transform: translateX(0);
+            background-color: #be185d; /* Pink background for Isa */
+            border: 2px solid #ec4899; /* Pink border */
+            color: #f9a8d4; /* Light pink text */
         }
 
         .gate.open-left {
@@ -214,22 +205,19 @@
                 -webkit-overflow-scrolling: touch;
                 position: relative;
             }
-            
+
             #memories-list {
                 max-height: 60vh !important;
                 overflow-y: auto;
                 -webkit-overflow-scrolling: touch;
             }
-            
+
             .main-content-grid {
                 display: block;
                 gap: 1.5rem;
             }
-            
-            /* Ensure mouse trail doesn't interfere on mobile */
-            #mouse-trail-container {
-                display: none;
-            }
+
+            /* Mouse trail removed for better performance */
         }
     </style>
 </head>
@@ -244,7 +232,7 @@
             <span class="text-pink-400 drop-shadow-lg">Raf</span>
         </div>
         <div class="gate gate-right">
-            <span class="text-pink-400 drop-shadow-lg">Isa</span>
+            <span class="text-blue-400 drop-shadow-lg">Isa</span>
         </div>
         <div class="z-10 bg-gray-800 p-8 rounded-3xl shadow-xl text-center max-w-sm w-full border border-pink-700 backdrop-blur-sm bg-opacity-70">
             <h2 class="text-3xl font-orbitron text-pink-400 mb-6 drop-shadow-md">Enter the key, and you’ll always see,
@@ -270,8 +258,7 @@
         </div>
     </div>
 
-    <!-- Mouse Trail Effect Container -->
-    <div id="mouse-trail-container"></div>
+    <!-- Mouse trail removed for better performance -->
 
     <!-- Main App Content - Initially Hidden -->
     <div id="main-app-content" class="hidden w-full max-w-5xl lg:max-w-7xl flex-grow grid gap-6 main-content-grid mt-8">
@@ -391,7 +378,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, deleteDoc, doc, updateDoc, where, getDocs, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
         // Global variables for Firebase config and app ID
@@ -407,9 +394,6 @@
             measurementId: "G-7CHR3NL4GF"
         };
 
-
-        // Define the maximum length of the mouse trail
-        const TRAIL_LENGTH = 20;
 
         // Password for the website (Base64 encoded for obfuscation)
         // Original password: "rafxisa"
@@ -457,10 +441,54 @@
             return btoa(message);
         }
 
+        // Helper function to compress image more aggressively
+        function compressImage(file, maxWidth = 800, quality = 0.6) {
+            return new Promise((resolve) => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const img = new Image();
+                
+                img.onload = () => {
+                    // Calculate new dimensions while maintaining aspect ratio
+                    let { width, height } = img;
+                    
+                    // More aggressive size reduction
+                    const maxDimension = Math.max(width, height);
+                    if (maxDimension > maxWidth) {
+                        const scale = maxWidth / maxDimension;
+                        width = Math.floor(width * scale);
+                        height = Math.floor(height * scale);
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    
+                    // Draw and compress with better quality settings
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.fillRect(0, 0, width, height);
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // Try multiple compression levels if needed
+                    canvas.toBlob((blob) => {
+                        if (blob && blob.size > 500000) { // If still > 500KB, compress more
+                            canvas.toBlob(resolve, 'image/jpeg', 0.4);
+                        } else {
+                            resolve(blob);
+                        }
+                    }, 'image/jpeg', quality);
+                };
+                
+                img.src = URL.createObjectURL(file);
+            });
+        }
+
         // Helper function to handle image selection (both file input and paste)
-        function handleImageSelection(file) {
+        async function handleImageSelection(file) {
             if (file && file.type.startsWith('image/')) {
-                pastedImageFile = file;
+                // Compress image first
+                const compressedFile = await compressImage(file);
+                pastedImageFile = compressedFile;
+                
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     pastedImagePreview.src = e.target.result;
@@ -468,7 +496,7 @@
                     pastePlaceholder.classList.add('hidden');
                     clearImageBtn.classList.remove('hidden'); // Show clear button
                 };
-                reader.readAsDataURL(file);
+                reader.readAsDataURL(compressedFile);
                 imageDescriptionInput.value = ''; // Clear description for new image
                 saveImageBtn.disabled = false; // Enable save button
                 imageDescriptionInput.disabled = false; // Enable description input
@@ -577,32 +605,73 @@
             });
         };
 
+        // Function to reconstruct chunked image data
+        async function reconstructChunkedImage(imageId) {
+            try {
+                const chunksQuery = query(
+                    collection(db, `artifacts/${appId}/public/data/image_chunks`),
+                    where('imageId', '==', imageId),
+                    orderBy('chunkIndex')
+                );
+                const chunksSnapshot = await getDocs(chunksQuery);
+                
+                let reconstructedData = '';
+                chunksSnapshot.forEach(doc => {
+                    reconstructedData += doc.data().chunkData;
+                });
+                
+                return reconstructedData;
+            } catch (error) {
+                console.error("Error reconstructing chunked image:", error);
+                return null;
+            }
+        }
+
         // Render memories to the DOM
-        const renderMemories = (memories) => {
+        const renderMemories = async (memories) => {
             memoriesList.innerHTML = ''; // Clear existing memories
             if (memories.length === 0) {
                 noMemoriesMessage.style.display = 'block';
             } else {
                 noMemoriesMessage.style.display = 'none';
-                memories.forEach(memory => {
+                
+                for (const memory of memories) {
                     const memoryCard = document.createElement('div');
                     memoryCard.className = "bg-gray-800 p-6 rounded-2xl shadow-md border-2 border-pink-700 transform transition-all duration-200 hover:scale-[1.02] hover:shadow-lg hover:border-pink-500 backdrop-blur-sm bg-opacity-70";
 
                     let contentHtml = '';
-                    if (memory.type === 'image' && memory.imageUrl) {
-                        contentHtml = `
-                            <div class="mb-3">
-                                <img src="${memory.imageUrl}" alt="${memory.imageDescription || "Memory image"}" class="w-full h-auto rounded-lg mb-2 object-cover max-h-96" onerror="this.onerror=null;this.src='https://placehold.co/400x300/CCCCCC/333333?text=Image+Load+Error';" />
-                                ${memory.imageDescription ? `<p class="text-gray-200 text-sm italic font-light">${memory.imageDescription}</p>` : ''}
-                            </div>
-                        `;
+                    if (memory.type === 'image') {
+                        let imageSrc = memory.imageUrl || memory.imageData;
+                        
+                        // Handle chunked images
+                        if (memory.isChunked && !memory.imageData && memory.imageId) {
+                            imageSrc = await reconstructChunkedImage(memory.imageId);
+                        }
+                        
+                        if (imageSrc) {
+                            contentHtml = `
+                                <div class="mb-3">
+                                    <img src="${imageSrc}" alt="${memory.imageDescription || "Memory image"}" class="w-full h-auto rounded-lg mb-2 object-cover max-h-96" onerror="this.onerror=null;this.src='https://placehold.co/400x300/CCCCCC/333333?text=Image+Load+Error';" />
+                                    ${memory.imageDescription ? `<p class="text-gray-200 text-sm italic font-light">${memory.imageDescription}</p>` : ''}
+                                </div>
+                            `;
+                        } else {
+                            contentHtml = `
+                                <div class="mb-3">
+                                    <div class="w-full h-48 bg-gray-700 rounded-lg mb-2 flex items-center justify-center">
+                                        <span class="text-gray-400">Image loading failed</span>
+                                    </div>
+                                    ${memory.imageDescription ? `<p class="text-gray-200 text-sm italic font-light">${memory.imageDescription}</p>` : ''}
+                                </div>
+                            `;
+                        }
                     } else {
                         contentHtml = `<p class="text-gray-100 text-base mb-3 leading-relaxed font-light">${memory.text}</p>`;
                     }
 
                     memoryCard.innerHTML = `
                         ${contentHtml}
-                        <div class="flex justify-between items-center text-sm text-gray-400 font-mono">
+                        <div class="flex justify-between items-center text-sm text-gray-400 font-mono mb-3">
                             <span>
                                 ${memory.timestamp?.toDate ? new Date(memory.timestamp.toDate()).toLocaleString() : 'Just now'}
                             </span>
@@ -613,15 +682,74 @@
                                 data-memory-type="${memory.type || 'text'}"
                                 data-image-url="${memory.imageUrl || ''}"
                                 data-image-path="${memory.imagePath || ''}"
+                                data-image-id="${memory.imageId || ''}"
+                                data-is-chunked="${memory.isChunked || false}"
                             >
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                 </svg>
                             </button>
                         </div>
+                        <div class="flex justify-between items-center gap-3 sm:gap-2">
+                            <button
+                                class="flex items-center gap-2 text-pink-300 hover:text-pink-400 transition duration-200 transform hover:scale-105 active:scale-95 heart-btn text-base sm:text-sm p-2 rounded-lg hover:bg-pink-900 hover:bg-opacity-30 min-h-[44px] min-w-[60px] justify-center"
+                                data-memory-id="${memory.id}"
+                                data-hearts="${memory.hearts || 0}"
+                            >
+                                <svg class="w-5 h-5 sm:w-4 sm:h-4 ${(memory.hearts && memory.hearts > 0) ? 'fill-current' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                                </svg>
+                                <span class="heart-count">${memory.hearts || 0}</span>
+                            </button>
+                            <button
+                                class="flex items-center gap-2 text-blue-300 hover:text-blue-400 transition duration-200 transform hover:scale-105 active:scale-95 reply-btn text-base sm:text-sm p-2 rounded-lg hover:bg-blue-900 hover:bg-opacity-30 min-h-[44px] min-w-[80px] justify-center"
+                                data-memory-id="${memory.id}"
+                                data-memory-type="${memory.type || 'text'}"
+                            >
+                                <svg class="w-5 h-5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path>
+                                </svg>
+                                Reply
+                            </button>
+                        </div>
+                        <div class="reply-section hidden mt-3 pt-3 border-t border-pink-800" data-memory-id="${memory.id}">
+                            <textarea
+                                class="w-full p-3 rounded-lg border-2 border-pink-600 focus:border-pink-400 focus:ring focus:ring-pink-700 focus:ring-opacity-50 transition duration-200 ease-in-out text-gray-100 placeholder-pink-300 bg-gray-900 bg-opacity-70 resize-y min-h-[80px] font-mono text-sm"
+                                placeholder="Write your reply..."
+                            ></textarea>
+                            <div class="flex gap-3 mt-3">
+                                <button
+                                    class="flex-1 bg-gradient-to-r from-pink-500 to-purple-600 text-white font-bold py-3 px-4 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition duration-300 ease-in-out text-base sm:text-sm flex items-center justify-center min-h-[44px]
+                                    active:scale-95 active:shadow-inner focus:outline-none focus:ring-2 focus:ring-pink-300 focus:ring-opacity-75 send-reply-btn"
+                                    data-parent-id="${memory.id}"
+                                >
+                                    <svg class="w-5 h-5 sm:w-4 sm:h-4 mr-2 sm:mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                                    </svg>
+                                    Send
+                                </button>
+                                <button
+                                    class="bg-gray-600 text-white font-bold py-3 px-4 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition duration-300 ease-in-out text-base sm:text-sm flex items-center justify-center min-h-[44px] min-w-[80px]
+                                    active:scale-95 active:shadow-inner focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-75 cancel-reply-btn"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                        ${memory.replies && memory.replies.length > 0 ? `
+                            <div class="replies-list mt-3 pt-3 border-t border-pink-800">
+                                <h4 class="text-pink-300 text-sm font-mono mb-2">Replies:</h4>
+                                ${memory.replies.map(reply => `
+                                    <div class="bg-gray-900 p-3 rounded-lg mb-2 border border-pink-700">
+                                        <p class="text-gray-200 text-sm mb-1">${reply.text}</p>
+                                        <span class="text-gray-400 text-xs font-mono">${reply.timestamp instanceof Date ? reply.timestamp.toLocaleString() : (reply.timestamp?.toDate ? new Date(reply.timestamp.toDate()).toLocaleString() : 'Just now')}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : ''}
                     `;
                     memoriesList.appendChild(memoryCard);
-                });
+                }
 
                 // Attach event listeners to new delete buttons
                 document.querySelectorAll('.delete-memory-btn').forEach(button => {
@@ -630,8 +758,122 @@
                         const type = event.currentTarget.dataset.memoryType;
                         const imageUrl = event.currentTarget.dataset.imageUrl;
                         const imagePath = event.currentTarget.dataset.imagePath;
-                        memoryToDelete = { id, type, imageUrl, imagePath };
+                        const imageId = event.currentTarget.dataset.imageId;
+                        const isChunked = event.currentTarget.dataset.isChunked === 'true';
+                        memoryToDelete = { id, type, imageUrl, imagePath, imageId, isChunked };
                         deleteConfirmModal.classList.remove('hidden');
+                    };
+                });
+
+                // Attach event listeners to heart buttons
+                document.querySelectorAll('.heart-btn').forEach(button => {
+                    button.onclick = async (event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        
+                        const target = event.currentTarget;
+                        if (!target || !target.dataset) {
+                            console.error("Invalid heart button target");
+                            return;
+                        }
+                        
+                        const memoryId = target.dataset.memoryId;
+                        const currentHearts = parseInt(target.dataset.hearts) || 0;
+                        const newHearts = currentHearts + 1;
+                        
+                        if (!memoryId) {
+                            console.error("No memory ID found");
+                            return;
+                        }
+                        
+                        try {
+                            const memoryRef = doc(db, `artifacts/${appId}/public/data/memories`, memoryId);
+                            await updateDoc(memoryRef, {
+                                hearts: newHearts
+                            });
+                            
+                            // Update UI immediately
+                            target.dataset.hearts = newHearts;
+                            const heartCount = target.querySelector('.heart-count');
+                            if (heartCount) {
+                                heartCount.textContent = newHearts;
+                            }
+                            const heartIcon = target.querySelector('svg');
+                            if (heartIcon) {
+                                heartIcon.classList.add('fill-current');
+                            }
+                        } catch (error) {
+                            console.error("Error updating hearts:", error);
+                        }
+                    };
+                });
+
+                // Attach event listeners to reply buttons
+                document.querySelectorAll('.reply-btn').forEach(button => {
+                    button.onclick = (event) => {
+                        const memoryId = event.currentTarget.dataset.memoryId;
+                        const replySection = document.querySelector(`.reply-section[data-memory-id="${memoryId}"]`);
+                        
+                        // Hide all other reply sections
+                        document.querySelectorAll('.reply-section').forEach(section => {
+                            if (section !== replySection) {
+                                section.classList.add('hidden');
+                            }
+                        });
+                        
+                        // Toggle current reply section
+                        replySection.classList.toggle('hidden');
+                        if (!replySection.classList.contains('hidden')) {
+                            const textarea = replySection.querySelector('textarea');
+                            textarea.focus();
+                        }
+                    };
+                });
+
+                // Attach event listeners to send reply buttons
+                document.querySelectorAll('.send-reply-btn').forEach(button => {
+                    button.onclick = async (event) => {
+                        const parentId = event.currentTarget.dataset.parentId;
+                        const replySection = document.querySelector(`.reply-section[data-memory-id="${parentId}"]`);
+                        const textarea = replySection.querySelector('textarea');
+                        const replyText = textarea.value.trim();
+                        
+                        if (!replyText) return;
+                        
+                        try {
+                            const memoryRef = doc(db, `artifacts/${appId}/public/data/memories`, parentId);
+                            
+                            // Get current memory to add reply
+                            const memoryDoc = await getDoc(memoryRef);
+                            const currentMemory = memoryDoc.data();
+                            const currentReplies = currentMemory.replies || [];
+                            
+                            const newReply = {
+                                text: replyText,
+                                timestamp: new Date(),
+                                userId: currentUserId
+                            };
+                            
+                            await updateDoc(memoryRef, {
+                                replies: [...currentReplies, newReply]
+                            });
+                            
+                            // Clear and hide reply section
+                            textarea.value = '';
+                            replySection.classList.add('hidden');
+                        } catch (error) {
+                            console.error("Error adding reply:", error);
+                        }
+                    };
+                });
+
+                // Attach event listeners to cancel reply buttons
+                document.querySelectorAll('.cancel-reply-btn').forEach(button => {
+                    button.onclick = (event) => {
+                        const replySection = event.currentTarget.closest('.reply-section');
+                        const textarea = replySection.querySelector('textarea');
+                        textarea.value = '';
+                        replySection.classList.add('hidden');
                     };
                 });
             }
@@ -697,10 +939,70 @@
             }
         });
 
+        // Function to chunk large base64 data with smaller chunks
+        function chunkBase64Data(base64Data, chunkSize = 400000) { // ~400KB chunks for safety
+            const chunks = [];
+            for (let i = 0; i < base64Data.length; i += chunkSize) {
+                chunks.push(base64Data.slice(i, i + chunkSize));
+            }
+            return chunks;
+        }
+
+        // Function to save chunked image data
+        async function saveChunkedImage(base64Data, imageDescription, timestamp, userId) {
+            const chunks = chunkBase64Data(base64Data);
+            const imageId = `img_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            
+            const memoriesCollectionRef = collection(db, `artifacts/${appId}/public/data/memories`);
+            
+            // Save main image document with metadata
+            const mainImageDoc = await addDoc(memoriesCollectionRef, {
+                type: 'image',
+                imageId: imageId,
+                isChunked: chunks.length > 1,
+                totalChunks: chunks.length,
+                imageDescription: imageDescription,
+                timestamp: timestamp,
+                userId: userId,
+            });
+
+            // Save chunks if needed
+            if (chunks.length > 1) {
+                const chunksPromises = chunks.map((chunk, index) => 
+                    addDoc(collection(db, `artifacts/${appId}/public/data/image_chunks`), {
+                        imageId: imageId,
+                        chunkIndex: index,
+                        chunkData: chunk,
+                        userId: userId,
+                    })
+                );
+                await Promise.all(chunksPromises);
+            } else {
+                // For single chunk, store directly in main document
+                const memoriesDocRef = doc(db, `artifacts/${appId}/public/data/memories`, mainImageDoc.id);
+                await updateDoc(memoriesDocRef, {
+                    imageData: base64Data
+                });
+            }
+
+            return imageId;
+        }
+
         // Handle saving image memory
         saveImageBtn.addEventListener('click', async () => {
-            if (!pastedImageFile || !db || !storage || !currentUserId) {
-                console.log("No image to save or Firebase/User/Storage not ready.");
+            if (!pastedImageFile) {
+                console.error("Image upload error: No image file selected or pasted.");
+                alert("Please select an image first.");
+                return;
+            }
+            if (!db) {
+                console.error("Image upload error: Firestore not initialized.");
+                alert("Database not ready. Please refresh the page.");
+                return;
+            }
+            if (!currentUserId) {
+                console.error("Image upload error: Current user ID not available. Authentication might have failed.");
+                alert("Authentication failed. Please refresh the page.");
                 return;
             }
 
@@ -710,36 +1012,61 @@
             clearImageBtn.disabled = true; // Disable clear button during upload
 
             try {
-                const storagePath = `artifacts/${appId}/public/images/${currentUserId}/${Date.now()}_${pastedImageFile.name}`;
-                const storageRef = ref(storage, storagePath);
-                const snapshot = await uploadBytes(storageRef, pastedImageFile);
-                const downloadURL = await getDownloadURL(snapshot.ref);
-
-                const memoriesCollectionRef = collection(db, `artifacts/${appId}/public/data/memories`);
-                await addDoc(memoriesCollectionRef, {
-                    type: 'image',
-                    imageUrl: downloadURL,
-                    imageDescription: imageDescriptionInput.value,
-                    timestamp: serverTimestamp(),
-                    userId: currentUserId,
-                    imagePath: storagePath, // Save storage path in Firestore
-                });
-
-                // Reset image input area
-                pastedImageFile = null;
-                pastedImagePreview.src = '';
-                pastedImagePreview.classList.add('hidden');
-                pastePlaceholder.classList.remove('hidden');
-                imageDescriptionInput.value = '';
-                clearImageBtn.classList.add('hidden'); // Hide clear button after successful save
-            } catch (e) {
-                console.error("Error uploading image or adding document: ", e);
-            } finally {
+                console.log("Saving image as base64 data to Firestore...");
+                
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        const base64Data = e.target.result;
+                        console.log(`Base64 data size: ${base64Data.length} characters`);
+                        
+                        // Use chunking system for any image
+                        await saveChunkedImage(
+                            base64Data,
+                            imageDescriptionInput.value,
+                            serverTimestamp(),
+                            currentUserId
+                        );
+                        
+                        // Reset image input area
+                        pastedImageFile = null;
+                        pastedImagePreview.src = '';
+                        pastedImagePreview.classList.add('hidden');
+                        pastePlaceholder.classList.remove('hidden');
+                        imageDescriptionInput.value = '';
+                        clearImageBtn.classList.add('hidden');
+                        
+                        alert("Image saved successfully!");
+                    } catch (firestoreError) {
+                        console.error("Error saving to Firestore:", firestoreError);
+                        let errorMessage = "Failed to save image. ";
+                        
+                        if (firestoreError.message.includes("permissions")) {
+                            errorMessage += "Permission denied - check Firebase security rules.";
+                        } else if (firestoreError.message.includes("quota")) {
+                            errorMessage += "Storage quota exceeded.";
+                        } else if (base64Data.length > 1000000) {
+                            errorMessage += "Image is too large even after compression.";
+                        } else {
+                            errorMessage += "Please try again or use a smaller image.";
+                        }
+                        
+                        alert(errorMessage);
+                    } finally {
+                        imageUploadingIndicator.classList.add('hidden');
+                        saveImageBtn.disabled = true;
+                        imageDescriptionInput.disabled = true;
+                        clearImageBtn.disabled = false;
+                    }
+                };
+                reader.readAsDataURL(pastedImageFile);
+            } catch (error) {
+                console.error("Error processing image:", error);
+                alert("Failed to process image. Please try again.");
                 imageUploadingIndicator.classList.add('hidden');
-                // Re-evaluate button and input states after upload attempt
-                saveImageBtn.disabled = true; // Should remain disabled until new image is pasted
-                imageDescriptionInput.disabled = true; // Should remain disabled until new image is pasted
-                clearImageBtn.disabled = false; // Re-enable clear button if it's visible (though it's hidden here)
+                saveImageBtn.disabled = true;
+                imageDescriptionInput.disabled = true;
+                clearImageBtn.disabled = false;
             }
         });
 
@@ -763,15 +1090,41 @@
                 return;
             }
             try {
+                // Delete storage image if exists
                 if (memoryToDelete.type === 'image' && memoryToDelete.imagePath && storage) {
                     try {
                         const imageRef = ref(storage, memoryToDelete.imagePath);
                         await deleteObject(imageRef);
+                        console.log("Image deleted from Storage:", memoryToDelete.imagePath);
                     } catch (storageError) {
                         console.warn("Could not delete image from storage (might not exist or permissions issue):", storageError);
                     }
                 }
+                
+                // Delete chunked image data if exists
+                if (memoryToDelete.type === 'image' && memoryToDelete.isChunked && memoryToDelete.imageId) {
+                    try {
+                        const chunksQuery = query(
+                            collection(db, `artifacts/${appId}/public/data/image_chunks`),
+                            where('imageId', '==', memoryToDelete.imageId)
+                        );
+                        const chunksSnapshot = await getDocs(chunksQuery);
+                        
+                        const deletePromises = [];
+                        chunksSnapshot.forEach(doc => {
+                            deletePromises.push(deleteDoc(doc.ref));
+                        });
+                        
+                        await Promise.all(deletePromises);
+                        console.log("Chunked image data deleted:", memoryToDelete.imageId);
+                    } catch (chunkError) {
+                        console.warn("Could not delete chunked image data:", chunkError);
+                    }
+                }
+                
+                // Delete main memory document
                 await deleteDoc(doc(db, `artifacts/${appId}/public/data/memories`, memoryToDelete.id));
+                console.log("Memory document deleted from Firestore:", memoryToDelete.id);
             } catch (e) {
                 console.error("Error deleting document: ", e);
             } finally {
@@ -786,39 +1139,7 @@
             memoryToDelete = null; // Reset on cancel too
         });
 
-        // Mouse trail logic
-        const trailPositions = [];
-        const mouseTrailContainer = document.getElementById('mouse-trail-container');
-
-        // Check for touch device to disable mouse trail
-        const isTouchDevice = () => {
-            return ('ontouchstart' in window) ||
-                   (navigator.maxTouchPoints > 0) ||
-                   (navigator.msMaxTouchPoints > 0);
-        };
-
-        if (!isTouchDevice()) {
-            document.addEventListener('mousemove', (event) => {
-                const newPosition = { x: event.clientX, y: event.clientY, id: crypto.randomUUID() };
-                trailPositions.push(newPosition);
-
-                if (trailPositions.length > TRAIL_LENGTH) {
-                    trailPositions.shift(); // Remove the oldest position
-                }
-
-                // Clear and re-render trail elements
-                mouseTrailContainer.innerHTML = '';
-                trailPositions.forEach((pos, index) => {
-                    const trailElement = document.createElement('div');
-                    trailElement.className = 'mouse-glow-trail';
-                    trailElement.style.left = `${pos.x}px`;
-                    trailElement.style.top = `${pos.y}px`;
-                    trailElement.style.opacity = `${(index + 1) / TRAIL_LENGTH * 0.6}`;
-                    trailElement.style.transform = `translate(-50%, -50%) scale(${(index + 1) / TRAIL_LENGTH * 0.7 + 0.3})`;
-                    mouseTrailContainer.appendChild(trailElement);
-                });
-            });
-        }
+        // Mouse trail removed for better performance
 
 
         // Initialize the app when the window loads
